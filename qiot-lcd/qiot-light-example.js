@@ -20,9 +20,12 @@ var Commands = GrovePi.commands;
 var Board = GrovePi.board;
 
 var LightAnalogSensor = GrovePi.sensors.LightAnalog;
+var DHTDigitalSensor = GrovePi.sensors.DHTDigital
 
 var lightSensor_value = 0;
 var i2c1 = i2c.openSync(1);
+
+lcd.clear(i2c1);
 
 var board = new Board({
     debug: true,
@@ -37,15 +40,12 @@ var board = new Board({
         var lightSensor = new LightAnalogSensor(2);
         console.log('Light Analog Sensor (start watch)');
         lightSensor.on('change', function(res) {
-        	lightSensor_value = res;
+        	lightSensor_value = -10230/(-10-res);
 
-        	setTimeout(function() {
-                
-        		lcd.setText(i2c1, "light is :\n" + lightSensor_value);
-        		//lcd.setText(i2c1, "Memet is een\nEINDBAAS");
-        		lcd.setRGB(i2c1, 55, 55, 255);
-        		//i2c1.closeSync();
-            }, 1000);
+        	//lcd.setText(i2c1, "light is :\n" + lightSensor_value);
+        	//lcd.setText(i2c1, "Memet is een\nEINDBAAS");
+        	//lcd.setRGB(i2c1, 55, 55, 255);
+        	//i2c1.closeSync();
 
         	
           	//console.log('Light onChange value=' + res);
@@ -175,7 +175,7 @@ var sensor = {
             for (var sensoridx in sensors) {
                 var topic_Pub = sensors[sensoridx].topic;
                 //var temperature = 0;
-                var light = lightSensor_value;
+                var light = lightSensor_value.toFixed(0);
 
                 // if (sensoridx == 0){
                 //     var DHTinfo =  sensorLib.read(sensors[sensoridx].type, sensors[sensoridx].pin);
@@ -187,6 +187,15 @@ var sensor = {
                 //temperature = getRandomInt(0,50);
                 Qclient.publish(topic_Pub, JSON.stringify({value: light}),  {retain:true});
                 console.log(" send message to [mqtt(s)://" + HOST + ":" + PORT + "], topic_Pub = " + topic_Pub + ", value = " + JSON.stringify({value: light}));
+                try{
+                    lcd.setText_norefresh(i2c1, "light is :\n");
+                    //lcd.setText_norefresh(i2c1, "\n               ");
+                    lcd.setText_norefresh(i2c1, "\n" + light + "               ");
+                    lcd.setRGB(i2c1, 55, 55, 255);
+                } catch(err){
+                    console.log("i2c err");
+                }
+                
             }
             setTimeout(function() {
                 console.log("=========================================");
