@@ -1,6 +1,7 @@
 var mqtt = require('mqtt');
 var fs = require('fs');
 var http = require('http');
+var sleep = require('sleep');
 // var rpio = require('rpio');
 // var sensorLib = require("node-dht-sensor");
 var Q = require('q');
@@ -19,14 +20,19 @@ var Board = GrovePi.board;
 
 var LightAnalogSensor = GrovePi.sensors.LightAnalog;
 var DHTDigitalSensor = GrovePi.sensors.DHTDigital;
-var DigitalSensor = GrovePi.sensors.DigitalSensor;
-var AnalogSensor = GrovePi.sensors.AnalogSensor;
+var DigitalSensor = GrovePi.sensors.base.Digital;
+var AnalogSensor = GrovePi.sensors.base.Analog;
 
 var lightSensor_value = 0;
+
 var temperature_value = 0;
 var humidity_value = 0;
+
 var button_value = 0;
 var touch_value = 0;
+var Rotary_value = 0;
+var Sound_value = 0;
+
 
 var board = new Board({
     debug: true,
@@ -42,34 +48,73 @@ var board = new Board({
         var DHTSensor = new DHTDigitalSensor(8);
         var Button = new DigitalSensor(2);
         var touch = new DigitalSensor(3);
+        var Rotary = new AnalogSensor(0);
+        var Sound = new AnalogSensor(1);
         
-        console.log('Light Analog Sensor (start watch)');
+        console.log('Sensor (start watch)');
         
-        //light
+         //light
         lightSensor.on('change', function(res) {
-        	lightSensor_value = res;
+            if (typeof res != "undefined" || typeof res != false){
+                lightSensor_value = res;
+                //console.log('Light onChange value=' + res + "\n");
+            }
         })
-        lightSensor.watch()
+        lightSensor.watch();
         
         //dht11
         DHTSensor.on('change', function(res) {
-            temperature_value = res[0];
-            humidity_value = res[1];
+            if (typeof res[0] != "undefined" || typeof res[0] != false){
+                
+                temperature_value = res[0];
+				humidity_value = res[1];
+
+                //console.log('temperaturee onChange value=' + res[0] + "\n");
+                //console.log('humidity onChange value=' + res[1] + "\n");
+            }
+
         })
-        DHTSensor.watch()
+        DHTSensor.watch();
         
         //button
         Button.on('change', function(res) {
-            button_value = res;
+            if (typeof res != "undefined" || typeof res != false){
+                button_value = res;
+                //console.log('Button onChange value=' + res + "\n");
+            }
         })
-        Button.watch()
+        Button.watch();
 
         //touch
         touch.on('change', function(res) {
-            touch_value = res;
+            if (typeof res != "undefined" || typeof res != false){
+                touch_value = res;
+                //console.log('touch onChange value=' + res + "\n");   
+            }
         })
-        touch.watch()
+        touch.watch();
 
+        //Rotary
+            Rotary.on('change', function(res) {
+            if (typeof res != "undefined" || typeof res != false){
+                res = res/1023*100;
+                res = res.toFixed(0);
+                Rotary_value = res;
+                //console.log('Rotary onChange value=' + res + "\n");   
+            }
+        })
+        Rotary.watch();
+
+        //Sound
+            Sound.on('change', function(res) {
+            if (typeof res != "undefined" || typeof res != false){
+                res = res/1023*100;
+                res = res.toFixed(0);
+                Sound_value = res;
+                //console.log('Sound onChange value=' + res + "\n");   
+            }
+        })
+        Sound.watch();
 
       }
     }
@@ -178,7 +223,7 @@ function getresourceinfo(fileName) {
                 var resourcedetail = data.resources;
                 sensorslength = Object.keys(data.resources).length;
                 for (var resourceidx in resourcedetail) {
-                    var jsonobj = {topic: resourcedetail[resourceidx].topic};
+                    var jsonobj = {topic: resourcedetail[resourceidx].topic, restype: resourcedetail[resourceidx].resourcetypename};
                     resourceinfo.push(jsonobj);
                 }
                 defer.resolve(resourceinfo);
@@ -193,19 +238,39 @@ var sensor = {
         {
             for (var sensoridx in sensors) {
                 var topic_Pub = sensors[sensoridx].topic;
-                //var temperature = 0;
-                var light = lightSensor_value;
+                
+                var restype_name = sensors[sensoridx].restype;
+                var qiot_value = 0;
 
-                // if (sensoridx == 0){
-                //     var DHTinfo =  sensorLib.read(sensors[sensoridx].type, sensors[sensoridx].pin);
-                //     temperature = parseInt(DHTinfo.temperature.toFixed(0));
-                // }
-                // else{
-                //     temperature = getRandomInt(0,50);
-                // }
-                //temperature = getRandomInt(0,50);
-                Qclient.publish(topic_Pub, JSON.stringify({value: light}),  {retain:true});
-                console.log(" send message to [mqtt(s)://" + HOST + ":" + PORT + "], topic_Pub = " + topic_Pub + ", value = " + JSON.stringify({value: light}));
+                
+                if (restype_name == "Temperature"){
+                	qiot_value = temperature_value;
+                }
+                else if (restype_name == "Humidity") {
+                	qiot_value = humidity_value;
+                }
+                else if (restype_name == "Button") {
+                	qiot_value = button_value;
+                }
+                else if (restype_name == "Touch") {
+                	qiot_value = touch_value;
+                }
+                else if (restype_name == "Sound") {
+                	qiot_value = Sound_value;
+                }
+                else if (restype_name == "Rotary Angle") {
+                	qiot_value = Rotary_value;
+                }
+                else if (restype_name == "Light") {
+                	qiot_value = lightSensor_value;
+                }
+
+                else{
+                	qiot_value = "undefined";
+                }
+
+                Qclient.publish(topic_Pub, JSON.stringify({value: qiot_value}),  {retain:true});
+                console.log(" send message to [mqtt(s)://" + HOST + ":" + PORT + "], topic_Pub = " + topic_Pub + ", value = " + JSON.stringify({value: qiot_value}));
             }
             setTimeout(function() {
                 console.log("=========================================");
@@ -228,13 +293,13 @@ function addsensors(resourcesinfo) {
         if( i == 0)
         {
             //real
-            var jsonobj = {name: 'Rajah-RPI-DHT11-1-Office', type: 11, pin: 4,topic: resourcesinfo[i].topic};
+            var jsonobj = {name: 'Rajah-RPI-DHT11-1-Office', type: 11, pin: 4,topic: resourcesinfo[i].topic, restype: resourcesinfo[i].restype};
             sensors.push(jsonobj);
         }
         else
         {
             //fake
-            var jsonobj = {name: 'Fake' + i.toString(), type: 22, pin: -1, topic: resourcesinfo[i].topic};
+            var jsonobj = {name: 'Fake' + i.toString(), type: 22, pin: -1, topic: resourcesinfo[i].topic, restype: resourcesinfo[i].restype};
             sensors.push(jsonobj);
         }
     }
