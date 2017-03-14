@@ -33,7 +33,15 @@ var touch_value = 0;
 var Rotary_value = 0;
 var Sound_value = 0;
 
+var lightSensor = new LightAnalogSensor(2);
+var DHTSensor = new DHTDigitalSensor(8);
+var Button = new DigitalSensor(2);
+var touch = new DigitalSensor(3);
+var Rotary = new AnalogSensor(0);
+var Sound = new AnalogSensor(1);
 
+var board = new Board();
+/*
 var board = new Board({
     debug: true,
     onError: function(err) {
@@ -119,6 +127,7 @@ var board = new Board({
       }
     }
   })
+  */
 board.init()
 
 //declare mqtt server host & port infos
@@ -232,6 +241,13 @@ function getresourceinfo(fileName) {
         return defer.promise;
 }
 
+
+/*
+
+for QIoT Suite Lite connection
+
+*/
+
 var sensor = {
     read: function() {
         if (typeof sensors != "undefined")
@@ -244,24 +260,56 @@ var sensor = {
 
                 
                 if (restype_name == "Temperature"){
+                	var res = DHTSensor.read()[0]
+                	if (typeof res != "undefined" || typeof res != "false"){
+                		temperature_value = res;
+            		}
                 	qiot_value = temperature_value;
                 }
                 else if (restype_name == "Humidity") {
+                	var res = DHTSensor.read()[1]
+                	if (typeof res != "undefined" || typeof res != "false"){
+                		humidity_value = res;
+            		}
                 	qiot_value = humidity_value;
                 }
                 else if (restype_name == "Button") {
+                	var res = Button.read()
+                	if (typeof res != "undefined" || typeof res != "false"){
+                		button_value = res;
+            		}
                 	qiot_value = button_value;
                 }
                 else if (restype_name == "Touch") {
+                	var res = touch.read()
+                	if (typeof res != "undefined" || typeof res != "false"){
+                		touch_value = res;
+            		}
                 	qiot_value = touch_value;
                 }
                 else if (restype_name == "Sound") {
+                	var res = Sound.read()
+                	if (typeof res != "undefined" || typeof res != "false"){
+                		res = res/1023*100;
+                		res = res.toFixed(0);
+                		Sound_value = res;
+            		}
                 	qiot_value = Sound_value;
                 }
                 else if (restype_name == "Rotary Angle") {
+                	var res = Rotary.read()
+                	if (typeof res != "undefined" || typeof res != "false"){
+                		res = res/1023*100;
+                		res = res.toFixed(0);
+                		Rotary_value = res;
+            		}
                 	qiot_value = Rotary_value;
                 }
                 else if (restype_name == "Light") {
+                	var res = lightSensor.read()
+                	if (typeof res != "undefined" || typeof res != "false"){
+                		lightSensor_value = res;
+            		}
                 	qiot_value = lightSensor_value;
                 }
 
@@ -275,7 +323,7 @@ var sensor = {
             setTimeout(function() {
                 console.log("=========================================");
                 sensor.read();
-            }, 1000);
+            }, 0.5);
         }
     }
 };
