@@ -14,19 +14,6 @@ var CERT = "";
 var TRUSTED_CA_LIST = "";
 var fakevalue = 0;
 
-/*
-//sensors
-var lightSensor_value = 0;
-
-var temperature_value = 0;
-var humidity_value = 0;
-
-var button_value = 0;
-var touch_value = 0;
-var Rotary_value = 0;
-var Sound_value = 0;
-*/
-
 
 //declare mqtt server host & port infos
 PORT = 8883;
@@ -62,11 +49,9 @@ resourceinfo = [];
 
 
 function getresourceinfo(fileName) {
-        var defer = Q.defer();
-        console.log("===============1=============");
-
+        var defer = Q.defer();     
         var data = fs.readFileSync(fileName, 'utf8');
-		console.log("===============1.4=============");
+
         data = JSON.parse(data);
         HOST = data.host[0];
         PORT = data.port;
@@ -115,13 +100,6 @@ function getresourceinfo(fileName) {
             mqttoptions.protocol = 'mqtts';
         } 
         /* End of Assginged new value to mqttoptions*/
-        Qclient = mqtt.connect(mqttoptions);
-        Qclient.on('error', function(err) {
-            console.log("=========================================");
-            console.log("something wrong with mqtt service, err reason: " + err);
-            console.log("=========================================");
-        });
-        console.log("===============1.5=============");
         var resourcedetail = data.resources;
         sensorslength = Object.keys(data.resources).length;
         for (var resourceidx in resourcedetail) {
@@ -138,8 +116,7 @@ function getresourceinfo(fileName) {
     return resourceinfo;
 	}
 
-function addsensors(resourcesinfo) {
-	console.log("===============4=============");	
+function addsensors(resourcesinfo) {	
     var length = Object.keys(resourcesinfo).length;
 
     for(var i = 0; i < length; i++){
@@ -156,7 +133,6 @@ function addsensors(resourcesinfo) {
         };
             sensors.push(jsonobj);
     }
-    console.log("===============5=============");	
    	return sensors;
 }
 
@@ -170,15 +146,15 @@ var mqttmessage = {
 	                var qiot_value = sensors[sensoridx].value;
 
 
-					Qclient.publish(topic_Pub, JSON.stringify({value: qiot_value}),  {retain:true});
+					Qclient.publish(topic_Pub, JSON.stringify({value: qiot_value}),  {qos:2,retain:true});
 	            	console.log(" send message to [mqtt(s)://" + HOST + ":" + PORT + "], topic_Pub = " + topic_Pub + ", value = " + JSON.stringify({value: qiot_value}) + sensors[sensoridx].name);
 	            }
-	                        
+	                     /*   
 	            setTimeout(function() {
                 	console.log("=========================================");
                 	mqttmessage.send();
             	}, 1000);
-            	
+            	*/
 
 			}
 
@@ -191,32 +167,47 @@ module.exports.qiotmqtt = {
 	start: 	function (resourceinfofile){
 				
 				addsensors(getresourceinfo(resourceinfofile));
-				mqttmessage.send();
+                Qclient = mqtt.connect(mqttoptions);
+                Qclient.on('error', function(err) {
+                    console.log("=========================================");
+                    console.log("something wrong with mqtt service, err reason: " + err);
+                    console.log("=========================================");
+                });
 
-				
-				/*
-				getresourceinfo(resourceinfofile).then(function(res) {
-					addsensors(res);
-	                // Qclient.end(true);
-	                console.log("===============UUUUUUU=============");	
-	                
-					console.log("===============LLLLLL=============");					
-				});
-				//done();
-						*/		
+                return Qclient;
+
 			},
-	id: 	function (){
+	id: 	function (id, value, Qsend){
+                for (var sensoridx in sensors) {
+                    if (id == sensors[sensoridx].id) {
+                        sensors[sensoridx].value = value;
+
+                        var topic_Pub = sensors[sensoridx].topic;
+                        var qiot_value = sensors[sensoridx].value;
+
+                        Qsend.publish(topic_Pub, JSON.stringify({value: qiot_value}),  {retain:true});
+                        console.log(" send message to [mqtt(s)://" + HOST + ":" + PORT + "], topic_Pub = " + topic_Pub + ", value = " + JSON.stringify({value: qiot_value}) + sensors[sensoridx].name);
+                    }
+                    else{
+
+                    }           
+                }
 		
 			},
-	type: 	function (restype_name , value){
-				console.log("===============TTTT=============");	
-				for (var sensoridx in sensors) {
-					if (restype_name == sensors[sensoridx].resourcetype) {
-						sensors[sensoridx].value = value;
-					}
-					else{
+	type: 	function (restype_name, value, Qsend){  
+                for (var sensoridx in sensors) {
+                    if (restype_name == sensors[sensoridx].resourcetype) {
+                        sensors[sensoridx].value = value;
 
-					}           
-				}
-			}
+                        var topic_Pub = sensors[sensoridx].topic;
+                        var qiot_value = sensors[sensoridx].value;
+
+                        Qsend.publish(topic_Pub, JSON.stringify({value: qiot_value}),  {retain:true});
+                        console.log(" send message to [mqtt(s)://" + HOST + ":" + PORT + "], topic_Pub = " + topic_Pub + ", value = " + JSON.stringify({value: qiot_value}) + sensors[sensoridx].name);
+                    }
+                    else{
+
+                    }           
+                }
+            }
 }

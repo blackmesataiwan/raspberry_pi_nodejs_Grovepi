@@ -1,8 +1,6 @@
 var QIoT = require('./QIoT');
 
 var GrovePi = require('node-grovepi').GrovePi;
-var Q = require('q');
-var async = require('async');
 var Commands = GrovePi.commands;
 var Board = GrovePi.board;
 
@@ -21,69 +19,32 @@ var Sound = new AnalogSensor(1);
 var board = new Board();
 board.init()
 
-
-
-
-var deferred = Q.defer();
 console.log("===============start=============");	
 
-QIoT.qiotmqtt.start('./res/resourceinfo.json');
-async.parallel(
-    function() {
-    	
-    }
-);
-async.parallel(
-    function() {
-    	while (1){
-    		QIoT.qiotmqtt.type("Temperature",DHTSensor.read()[0]);
-			QIoT.qiotmqtt.type("Humidity",DHTSensor.read()[1]);
-			QIoT.qiotmqtt.type("Button",Button.read());
-			QIoT.qiotmqtt.type("Touch",touch.read());
+/*** 
+	Setup QIoT Suite Lite connection.
+***/
 
-			QIoT.qiotmqtt.type("Sound",parseInt(Sound.read()/1023*100, 10));
-			QIoT.qiotmqtt.type("Rotary Angle",parseInt(Rotary.read()/1023*100, 10));
-			QIoT.qiotmqtt.type("Light",lightSensor.read());
-			console.log("===============SE=============");
-    	}
-	    	
-    }
-);
+var Qclient = QIoT.qiotmqtt.start('./res/resourceinfo.json');
 
 
+/*** 
+	Send sensor's data to QIoT Suite Lite by Resourcetype.
+***/
 
-
-/*
-function sensors() {
-  console.log("===============SF=============");	
+function sensors(){
 	
-	QIoT.qiotmqtt.type("Temperature",DHTSensor.read()[0]);
-	QIoT.qiotmqtt.type("Humidity",DHTSensor.read()[1]);
-	QIoT.qiotmqtt.type("Button",Button.read());
-	QIoT.qiotmqtt.type("Touch",touch.read());
+	QIoT.qiotmqtt.type("Temperature",DHTSensor.read()[0],Qclient);
+	QIoT.qiotmqtt.type("Humidity",DHTSensor.read()[1],Qclient);
+	QIoT.qiotmqtt.type("Button",Button.read(),Qclient);
+	QIoT.qiotmqtt.type("Touch",touch.read(),Qclient);
+	QIoT.qiotmqtt.type("Sound",parseInt(Sound.read()/1023*100, 10),Qclient);
+	QIoT.qiotmqtt.type("Rotary Angle",parseInt(Rotary.read()/1023*100, 10),Qclient);
+	QIoT.qiotmqtt.type("Light",lightSensor.read(),Qclient);
 
-	QIoT.qiotmqtt.type("Sound",parseInt(Sound.read()/1023*100, 10));
-	QIoT.qiotmqtt.type("Rotary Angle",parseInt(Rotary.read()/1023*100, 10));
-	QIoT.qiotmqtt.type("Light",lightSensor.read());
-	console.log("===============SE=============");	
-	
-	sensors();
-	console.log("===============SSSSSSSS=============");	
-	
 	setTimeout(function() {
 		console.log("wating......");
 		sensors();
-	}, 0.5);
-	
-	
-};
+	}, 100);
+}
 sensors();
-*/
-/*
-start().then(function()　{
-  console.log("===============sensors=============");
-  //process.nextTick(sensors);
-  sensors();
-});
-*/
-console.log("===============END=============");	
