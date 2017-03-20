@@ -4,8 +4,6 @@ var mqtt = require('mqtt');
 var fs = require('fs');
 var http = require('http');
 var sleep = require('sleep');
-// var rpio = require('rpio');
-// var sensorLib = require("node-dht-sensor");
 var Q = require('q');
 var async = require('async');
 //declare the path which cert infos locates.
@@ -136,32 +134,6 @@ function addsensors(resourcesinfo) {
    	return sensors;
 }
 
-var mqttmessage = {
-	send: function(){
-	        if (typeof sensors != "undefined"){
-	            for (var sensoridx in sensors) {
-	                var topic_Pub = sensors[sensoridx].topic;
-	                
-	                var restype_name = sensors[sensoridx].resourcetype;
-	                var qiot_value = sensors[sensoridx].value;
-
-
-					Qclient.publish(topic_Pub, JSON.stringify({value: qiot_value}),  {qos:2,retain:true});
-	            	console.log(" send message to [mqtt(s)://" + HOST + ":" + PORT + "], topic_Pub = " + topic_Pub + ", value = " + JSON.stringify({value: qiot_value}) + sensors[sensoridx].name);
-	            }
-	                     /*   
-	            setTimeout(function() {
-                	console.log("=========================================");
-                	mqttmessage.send();
-            	}, 1000);
-            	*/
-
-			}
-
-		}
-};
-
-
 module.exports.qiotmqtt = {
 		
 	start: 	function (resourceinfofile){
@@ -213,13 +185,12 @@ module.exports.qiotmqtt = {
     subscribeofid: function(id, Qreceive){
                     for (var sensoridx in sensors) {
                     if (id == sensors[sensoridx].id) {
-                        //sensors[sensoridx].value = value;
 
                         var topic_Pub = sensors[sensoridx].topic;
-                        //var qiot_value = sensors[sensoridx].value;
 
                         Qreceive.subscribe(sensors[sensoridx].topic);
                         console.log("add subscribe :" + sensors[sensoridx].topic)
+                        return sensors[sensoridx].topic;
                     }
                     else{
 
