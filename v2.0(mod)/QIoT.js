@@ -209,5 +209,23 @@ module.exports.qiotmqtt = {
 
                     }           
                 }
-            }
+            },
+    subscribeofid: function(id, Qreceive){
+                    for (var sensoridx in sensors) {
+                    if (id == sensors[sensoridx].id) {
+                        //sensors[sensoridx].value = value;
+
+                        var topic_Pub = sensors[sensoridx].topic;
+                        //var qiot_value = sensors[sensoridx].value;
+
+                        Qreceive.subscribe(sensors[sensoridx].topic);
+                        console.log("add subscribe :" + sensors[sensoridx].topic)
+                    }
+                    else{
+
+                    }           
+                    }
+
+
+    }
 }

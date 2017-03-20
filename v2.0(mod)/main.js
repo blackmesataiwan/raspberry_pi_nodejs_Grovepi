@@ -15,6 +15,7 @@ var Button = new DigitalSensor(2);
 var touch = new DigitalSensor(3);
 var Rotary = new AnalogSensor(0);
 var Sound = new AnalogSensor(1);
+//var Piezo = new AnalogSensor(1);
 
 var board = new Board();
 board.init()
@@ -41,6 +42,7 @@ function sensors(){
 	QIoT.qiotmqtt.type("Sound",parseInt(Sound.read()/1023*100, 10),Qclient);
 	QIoT.qiotmqtt.type("Rotary Angle",parseInt(Rotary.read()/1023*100, 10),Qclient);
 	QIoT.qiotmqtt.type("Light",lightSensor.read(),Qclient);
+	//QIoT.qiotmqtt.type("Piezo Vibration",parseInt(Piezo.read()/1023*100, 10),Qclient);
 
 	setTimeout(function() {
 		console.log("wating......");
