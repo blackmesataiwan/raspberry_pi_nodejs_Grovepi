@@ -1,0 +1,14 @@
+{
+  "name": "qiot",
+  "version": "1.0.0",
+  "main": "main.js",
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "dependencies": {
+      "socket.io":"latest",
+      "mqtt":"latest",
+      "q":"latest",
+      "node-grovepi":"latest"
+  }
+}
