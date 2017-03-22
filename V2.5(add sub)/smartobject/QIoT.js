@@ -2,15 +2,12 @@ console.log("Start test module");
 
 var mqtt = require('mqtt');
 var fs = require('fs');
-var http = require('http');
-var sleep = require('sleep');
-var Q = require('q');
-var async = require('async');
+//var http = require('http');
+//var Q = require('q');
 //declare the path which cert infos locates.
 var KEY = "";
 var CERT = "";
 var TRUSTED_CA_LIST = "";
-var fakevalue = 0;
 
 
 //declare mqtt server host & port infos
@@ -47,7 +44,7 @@ resourceinfo = [];
 
 
 function getresourceinfo(fileName) {
-        var defer = Q.defer();     
+        //var defer = Q.defer();     
         var data = fs.readFileSync(fileName, 'utf8');
 
         data = JSON.parse(data);
